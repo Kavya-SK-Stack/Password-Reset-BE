@@ -1,6 +1,6 @@
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
-const bcryt = require("bcrypt");
+const bcryt = require("bcryptjs");
 const dotenv = require("dotenv");
 dotenv.config();
 const nodemailer = require("nodemailer");
@@ -45,7 +45,7 @@ const authController = {
           .json({ message: "User does not exist,Please signup" });
       }
       // check if password is correct
-      const isMatch = await bcryt.compare(password, user.password);
+      const isMatch = bcryt.compare(password, user.password);
       if (!isMatch) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
