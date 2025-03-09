@@ -12,10 +12,11 @@ const auth = {
           .json({ message: "Access denied, no token provider" });
       }
 
-      const token = authorizationHeader.substring(7);
+      const token = authorizationHeader.split(" ")[1];
       if (!token) {
-        return res.status(401).json({ message: "invalid token format" });
+        return res.status(401).json({ message: "Invalid token format" });
       }
+
 
       // verify token
 

@@ -1,37 +1,41 @@
 const User = require("../models/user");
 const jwt = require("jsonwebtoken");
-const bcryt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const dotenv = require("dotenv");
 dotenv.config();
 const nodemailer = require("nodemailer");
-const user = require("../models/user");
+
 
 const authController = {
   signup: async (req, res) => {
-    try {
-      // get user input from request body
-      const { name, email, password } = req.body;
-      // check if user already exists
-      const user = await User.findOne({ email });
-      if (user) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-      // bcrytp the password
-      const hashedPassword = await bcryt.hash(password, 10);
-      // create user object in database
-      const newUser = new User({
-        name,
-        email,
-        password: hashedPassword,
-      });
-      //   save user in DB
-      await newUser.save();
-      res.status(201).json({ message: "User created successfully" });
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Internal server error" });
+  try {
+    console.log("Received request body:", req.body); // Log request data
+
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "All fields are required" });
     }
-  },
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    console.log("Hashed password:", hashedPassword); // Log hashed password
+
+    const newUser = new User({ name, email, password: hashedPassword });
+    const savedUser = await newUser.save();
+    console.log("Saved user:", savedUser); // Log saved user
+
+    res.status(201).json({ message: "User created successfully", user: savedUser });
+  } catch (error) {
+    console.error("Signup error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+},
+
+
   login: async (req, res) => {
     try {
       // get user input from request body
@@ -45,7 +49,8 @@ const authController = {
           .json({ message: "User does not exist,Please signup" });
       }
       // check if password is correct
-      const isMatch = bcryt.compare(password, user.password);
+      const isMatch = await bcrypt.compare(password, user.password);
+
       if (!isMatch) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
@@ -121,7 +126,7 @@ const authController = {
         }
       });
 
-      // send email with token
+      // Send email with token
       res
         .status(200)
         .json({ message: "Password reset link sent to your email" });
@@ -144,7 +149,7 @@ const authController = {
       if (!user) {
         return res.status(400).json({ message: "Invalid or expired token" });
       }
-      const hashedPassword = await bcryt.hash(password, 10);
+      const hashedPassword = await bcrypt.hash(password, 10);
       user.password = hashedPassword;
       user.resetPasswordToken = null;
       user.resetPasswordExpires = null;
