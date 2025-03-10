@@ -10,6 +10,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: "https://sky-app-sk.netlify.app/",
+    methods: ["GET", "POST"],
     credentials: true,
   })
 );
